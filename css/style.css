@@ -2,6 +2,7 @@ body {
     overflow: hidden;
     border-style: solid;
     border-color: #007bff !important;
+    border-bottom: none;
 }
 
 ::-webkit-scrollbar {
