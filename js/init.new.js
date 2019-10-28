@@ -66,3 +66,8 @@ function removeOptions(selectbox) {
         selectbox.remove(i);
     }
 }
+
+function propTest(propName, obj) {
+    // Instead of throwing an error, return a value that indicates success or not
+    return (propName in obj);
+}

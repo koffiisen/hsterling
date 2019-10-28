@@ -10,8 +10,9 @@ const getDate = function (url, position, callback) {
         let options = results.querySelectorAll('select')[position].options;
 
         for (let i = 0; i < options.length; i++) {
-            dates.push({url: siteURL + options[i].value, text: options[i].value});
+            dates.push({url: siteURL + options[i].value, text: options[i].text});
         }
+
         return callback(dates);
     })
 };
@@ -20,6 +21,8 @@ const getAll = function (url, callback) {
     let all = [];
     getHTML(url, function (results) {
         let a = results.querySelectorAll('.menu > a');
+
+        all.push({url: Cors + siteURL, text: "All"});
 
         for (let i = 0; i < a.length; i++)
             all.push({url: url + "/" + a[i].href.replace(Cors, ""), text: a[i].innerText});
@@ -77,7 +80,12 @@ $('#all_chp').on('change', function () {
     });
     removeOptions(select);
 
-    getDate(this.value, 2, function (dates) {
+    let position = 2;
+
+    if (select_all.options[select_all.selectedIndex].text === "All")
+        position = 0;
+
+    getDate(this.value, position, function (dates) {
         setTimeout(function () {
             if (dates !== null && dates.length > 0) {
                 for (let d = 0; d < dates.length; d++) {
@@ -93,43 +101,36 @@ $('#all_chp').on('change', function () {
 function decode(uri, date, loader) {
     dates_infos = [];
     getHTML(uri, function (results) {
-        let tables = results.querySelectorAll('table');
-
-        console.log(tables);
+        let tables = results.querySelectorAll('.table-hover');
 
         if (tables !== null && tables.length > 0) {
             for (let ti = 0; ti < tables.length; ti++) {
                 let nodes = tables[ti].childNodes[0].childNodes;
+                let tr = tables[ti].querySelectorAll('tbody > tr');
 
-                if (nodes !== null && nodes.length > 0) {
-                    for (let n = 0; n < nodes.length; n++) {
+                if (tr !== null && tr.length > 0) {
+                    for (let t = 0; t < tr.length; t++) {
                         try {
-                            if (nodes[n].children !== null && nodes[n].children.length > 0) {
-                                for (let c = 0; c < nodes[n].children.length; c++) {
-                                    let hours = nodes[n].children[0].innerText;
+                            let children = tr[t].children;
 
-                                    let eq1 = nodes[n].children[2].children[0].children[0].innerText;
-                                    let eq2 = nodes[n].children[2].children[0].children[2].innerText;
-                                    let score = nodes[n].children[2].children[0].children[1].innerText;
+                            let eq1 = children[2].children[0].children[0].innerText;
+                            let eq2 = children[2].children[0].children[2].innerText;
+                            let score = children[2].children[0].children[1].innerText;
+                            let globals_info = eq1 + " " + score + " " + eq2;
+                            let info = {
+                                'date': date,
+                                'hours': children[0].innerText,
+                                'eqsc': globals_info
+                            };
 
-                                    let globals_info = eq1 + " " + score + " " + eq2;
-
-                                    let info = {
-                                        'date': date,
-                                        'hours': hours,
-                                        'eqsc': globals_info
-                                    };
-
-                                    console.log(globals_info);
-
-                                    dates_infos.elegantPush(info, function (e) {
-                                        return e.date === info.date && e.hours === info.hours && e.eqsc === info.eqsc;
-                                    });
-                                }
-                            }
+                            dates_infos.elegantPush(info, function (e) {
+                                return e.date === info.date && e.hours === info.hours && e.eqsc === info.eqsc;
+                            });
 
                         } catch (e) {
-                            console.log(e instanceof TypeError);
+                            console.log(e);
+                        } finally {
+
                         }
                     }
                 }
