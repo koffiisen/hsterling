@@ -1,43 +1,65 @@
 let siteURL = "https://www.matchendirect.fr";
 let select = document.getElementById('match_date');
+let select_all = document.getElementById('all_chp');
 let dates_infos = [];
 let table = $('#match_info');
 
-const getDate = function (url, callback) {
+const getDate = function (url, position, callback) {
     let dates = [];
     getHTML(url, function (results) {
-        let options = results.querySelectorAll('select')[0].options;
+        let options = results.querySelectorAll('select')[position].options;
 
-        for (let i = 0; i < options.length; i++)
-            dates.push(url + options[i].value);
-
-        //console.log(dates);
+        for (let i = 0; i < options.length; i++) {
+            dates.push({url: siteURL + options[i].value, text: options[i].value});
+        }
         return callback(dates);
     })
 };
 
-getDate(Cors + siteURL, function (dates) {
+const getAll = function (url, callback) {
+    let all = [];
+    getHTML(url, function (results) {
+        let a = results.querySelectorAll('.menu > a');
+
+        for (let i = 0; i < a.length; i++)
+            all.push({url: url + "/" + a[i].href.replace(Cors, ""), text: a[i].innerText});
+
+        return callback(all);
+    })
+};
+
+const init = function () {
     let loader;
     loading(panel => {
         loader = panel;
     });
 
-    setTimeout(function () {
-        if (dates !== null && dates.length > 0) {
-            for (let d = 0; d < dates.length; d++) {
-                let temp = dates[d].split("-");
-                let result_date = temp[temp.length - 3] + "-" + temp[temp.length - 2] + "-" + temp[temp.length - 1];
+    getDate(Cors + siteURL, 0, function (dates) {
 
-                select.add(new Option(result_date.replace("/", ""), dates[d]));
+        setTimeout(function () {
+            if (dates !== null && dates.length > 0) {
+                for (let d = 0; d < dates.length; d++) {
+                    select.add(new Option(dates[d].text, dates[d].url));
+                }
+
+                getAll(Cors + siteURL, function (all) {
+
+                    if (all !== null && all.length > 0) {
+                        for (let a = 0; a < all.length; a++) {
+                            select_all.add(new Option(all[a].text, all[a].url));
+                        }
+                        loader.close();
+                    }
+                });
             }
-            setTimeout(function () {
-                loader.close();
-            }, 3000);
+        }, 3000);
 
-        }
-    }, 3000);
+    });
 
-});
+};
+
+init();
+
 
 $('#match_date').on('change', function () {
     let loader;
@@ -45,13 +67,35 @@ $('#match_date').on('change', function () {
         loader = panel;
     });
     let date = select.options[select.selectedIndex].text;
-    decode(this.value, date, loader);
+    decode(Cors + this.value, date, loader);
+});
+
+$('#all_chp').on('change', function () {
+    let loader;
+    loading(panel => {
+        loader = panel;
+    });
+    removeOptions(select);
+
+    getDate(this.value, 2, function (dates) {
+        setTimeout(function () {
+            if (dates !== null && dates.length > 0) {
+                for (let d = 0; d < dates.length; d++) {
+                    select.add(new Option(dates[d].text, dates[d].url));
+                }
+                loader.close();
+            }
+        }, 3000);
+
+    });
 });
 
 function decode(uri, date, loader) {
     dates_infos = [];
     getHTML(uri, function (results) {
         let tables = results.querySelectorAll('table');
+
+        console.log(tables);
 
         if (tables !== null && tables.length > 0) {
             for (let ti = 0; ti < tables.length; ti++) {

@@ -58,3 +58,11 @@ Array.prototype.elegantPush = function (element, comparer) {
         this.push(element);
     }
 };
+
+
+function removeOptions(selectbox) {
+    let i;
+    for (i = selectbox.options.length - 1; i >= 0; i--) {
+        selectbox.remove(i);
+    }
+}
